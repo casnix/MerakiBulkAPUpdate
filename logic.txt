@@ -1,0 +1,6 @@
+--claim
+    claim WAPs in csv by SN or order number
+--update
+    update WAPs in csv
+
+S/N, networkID, name, add tag, remove tag, clear tags
