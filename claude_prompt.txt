@@ -1,0 +1,10 @@
+Can you write me a python script that makes configuration changes to batches of Meraki APs with their API?  I need to use a CSV file as the source of truth, and I need the script to have the following options:
+```
+--claim - This should claim the APs without adding to the network.
+--add - This should claim and add to a network with the name in the CSV file.
+--update - This should update the names and tags specified in the CSV file of existing APs.
+--source - This is the source CSV file.
+--token - This is the API token to use.
+```
+
+Include error messages when options are used incorrectly or without their required combination, and include a `--help` option.  Do these using argparse.  Include type hinting in the script.
