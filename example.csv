@@ -1,0 +1,3 @@
+serial, name, tags, network_name
+Q234-ABCD-0001, AP-Floor1, floor-1;building-a, HQ-Network
+Q234-ABCD-0002, AP-Floor2, floor-2;building-a, HQ-Network
