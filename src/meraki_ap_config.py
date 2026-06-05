@@ -161,12 +161,12 @@ def do_claim(token: str, rows: list[Row]) -> None:
         sys.exit(1)
 
     print(f"Claiming {len(serials)} device(s) into org inventory...")
-    try:
-        post(token, f"/organizations/{org_id}/inventory/claim", {"serials": serials})
-        print(f"  ✓ Claimed: {', '.join(serials)}")
-    except requests.HTTPError as e:
-        print(f"  ✗ Claim failed: {e.response.text}", file=sys.stderr)
-        sys.exit(1)
+    for serial in serials:
+        try:
+            post(token, f"/organizations/{org_id}/inventory/claim", {"serials": [serial]})
+            print(f"  ✓ Claimed: {serial}")
+        except requests.HTTPError as e:
+            print(f"  ✗ Claim failed for {serial}: {e.response.text} — skipping.", file=sys.stderr)
 
 
 def do_add(token: str, rows: list[Row]) -> None:
@@ -190,27 +190,27 @@ def do_add(token: str, rows: list[Row]) -> None:
             print(f"  ✗ Network not found: '{net_name}' — skipping {len(net_rows)} device(s).", file=sys.stderr)
             continue
 
-        serials: list[str] = [r["serial"] for r in net_rows]
-        print(f"\nAdding {len(serials)} device(s) to network '{net_name}'...")
+        print(f"\nAdding {len(net_rows)} device(s) to network '{net_name}'...")
 
-        # Claim into org first
-        try:
-            post(token, f"/organizations/{org_id}/inventory/claim", {"serials": serials})
-        except requests.HTTPError as e:
-            print(f"  ✗ Org claim failed: {e.response.text}", file=sys.stderr)
-            continue
-
-        # Claim into network
-        try:
-            post(token, f"/networks/{net_id}/devices/claim", {"serials": serials})
-            print(f"  ✓ Added to network: {', '.join(serials)}")
-        except requests.HTTPError as e:
-            print(f"  ✗ Network claim failed: {e.response.text}", file=sys.stderr)
-            continue
-
-        # Set name and tags per device
         for row in net_rows:
             serial: str = row["serial"]
+
+            # Claim into org inventory — skip this device if it fails (e.g. already claimed)
+            try:
+                post(token, f"/organizations/{org_id}/inventory/claim", {"serials": [serial]})
+            except requests.HTTPError as e:
+                print(f"  ✗ Org claim failed for {serial}: {e.response.text} — skipping.", file=sys.stderr)
+                continue
+
+            # Claim into network — skip this device if it fails
+            try:
+                post(token, f"/networks/{net_id}/devices/claim", {"serials": [serial]})
+                print(f"  ✓ Added {serial} to network '{net_name}'")
+            except requests.HTTPError as e:
+                print(f"  ✗ Network claim failed for {serial}: {e.response.text} — skipping.", file=sys.stderr)
+                continue
+
+            # Set name and tags
             payload: Payload = {}
             if row.get("name"):
                 payload["name"] = row["name"]
